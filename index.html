@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ Terminal Chat Server - Complete Technical Documentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'cyber-dark': '#0a0a0f',
+                        'cyber-darker': '#060608',
+                        'glass': 'rgba(255, 255, 255, 0.1)',
+                        'glass-border': 'rgba(255, 255, 255, 0.2)'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-cyber-dark text-white overflow-x-hidden">
+    <!-- Particle Background -->
+    <canvas id="particle-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+    
+    <!-- Cursor Tracer -->
+    <div id="cursor-tracer" class="fixed pointer-events-none z-50 w-4 h-4 rounded-full bg-gradient-to-r from-cyan-400 to-violet-400 opacity-0 blur-sm transition-opacity duration-300"></div>
+
+    <!-- Main Content -->
+    <div class="relative z-10">
+        <!-- Header Section -->
+        <header class="min-h-screen flex items-center justify-center px-4" id="header">
+            <div class="text-center max-w-6xl mx-auto">
+                <h1 class="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent animate-fade-in-up">
+                    C++ Terminal Chat Server
+                </h1>
+                <h2 class="text-xl md:text-3xl text-cyan-300 mb-8 animate-fade-in-up font-semibold" style="animation-delay: 0.3s;">
+                    Complete Technical Documentation
+                </h2>
+                <p class="text-lg md:text-xl text-gray-300 mb-8 animate-fade-in-up" style="animation-delay: 0.6s;">
+                    Advanced Multi-Threaded Networking with Real-Time Communication
+                </p>
+                <div class="glass-card p-8 animate-fade-in-up" style="animation-delay: 0.9s;">
+                    <p class="text-lg leading-relaxed max-w-4xl mx-auto">
+                        A sophisticated multi-threaded chat server implementation featuring advanced threading architectures, custom LRU cache systems, ncurses-based terminal UI, and comprehensive socket programming. Built for high-performance real-time communication with robust error handling and resource management.
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Threading Architecture Section -->
+        <section class="py-20 px-4" id="threading">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="section-title">Threading Architecture</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                    <div class="glass-card p-8">
+                        <img src="https://pplx-res.cloudinary.com/image/upload/v1748871290/pplx_project_search_images/20448c7cfbb4451811aa3d314f1ded0fab3731c0.jpg" alt="Multithreaded Server Architecture" class="w-full h-64 object-cover rounded-lg mb-6">
+                        <h3 class="text-2xl font-bold mb-4 text-cyan-400">Server Threading Model</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            Our server implements a sophisticated thread-per-client architecture where the main thread handles connection acceptance while spawning dedicated handler threads for each client connection.
+                        </p>
+                    </div>
+                    <div class="glass-card p-8">
+                        <h3 class="text-2xl font-bold mb-4 text-violet-400">Key Threading Components</h3>
+                        <ul class="space-y-3 text-gray-300">
+                            <li class="flex items-center"><span class="w-2 h-2 bg-cyan-400 rounded-full mr-3"></span>Main acceptor thread</li>
+                            <li class="flex items-center"><span class="w-2 h-2 bg-violet-400 rounded-full mr-3"></span>Client handler threads</li>
+                            <li class="flex items-center"><span class="w-2 h-2 bg-cyan-400 rounded-full mr-3"></span>Mutex synchronization</li>
+                            <li class="flex items-center"><span class="w-2 h-2 bg-violet-400 rounded-full mr-3"></span>RAII lock guards</li>
+                            <li class="flex items-center"><span class="w-2 h-2 bg-cyan-400 rounded-full mr-3"></span>Thread lifecycle management</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Detailed Server Threading -->
+                <div class="glass-card p-8 mb-8 animate-fade-in-up">
+                    <h3 class="text-3xl font-bold mb-6 text-cyan-400">Server Threading Implementation</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-violet-300">Thread Creation & Management</h4>
+                            <div class="code-container mb-4">
+                                <pre><code class="cpp">// Thread creation for each client
+std::thread t(HANDLE_CLIENT, client_socket, u_id);
+threads.push_back(std::move(t));
+
+// Mutex declarations
+std::mutex client_mtx;  // Protects client vector
+std::mutex cout_mtx;    // Protects console output
+
+// RAII lock guard usage
+{
+    std::lock_guard<std::mutex> lock(client_mtx);
+    clients.push_back({client_socket, u_id, ""});
+}</code></pre>
+                            </div>
+                            <p class="text-gray-300">The server maintains a vector of client threads, using <span class="text-cyan-400">std::move()</span> to transfer thread ownership efficiently and prevent copy operations on thread objects.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-violet-300">Critical Section Protection</h4>
+                            <ul class="space-y-3 text-gray-300">
+                                <li><strong class="text-cyan-400">client_mtx:</strong> Protects shared client vector during add/remove operations</li>
+                                <li><strong class="text-cyan-400">cout_mtx:</strong> Ensures thread-safe console logging</li>
+                                <li><strong class="text-cyan-400">RAII Locking:</strong> Automatic lock release using lock_guard destructors</li>
+                                <li><strong class="text-cyan-400">Scope Management:</strong> Minimizes lock holding time through block scoping</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Client Threading Model -->
+                <div class="glass-card p-8 mb-8 animate-fade-in-up">
+                    <h3 class="text-3xl font-bold mb-6 text-violet-400">Client Threading Architecture</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-cyan-300">Dual-Thread Design</h4>
+                            <div class="code-container mb-4">
+                                <pre><code class="cpp">// Client thread creation
+std::thread send_thread(SEND_MESSAGE, socket_fd);
+std::thread recv_thread(RECV_MESSAGE, socket_fd);
+
+// Thread coordination
+extern bool EXIT_FLAG;
+extern std::mutex screen_mutex;
+
+// Full-duplex communication enabling
+send_thread.detach();
+recv_thread.join();</code></pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-cyan-300">Producer-Consumer Pattern</h4>
+                            <p class="text-gray-300 mb-4">The client implements a producer-consumer pattern where:</p>
+                            <ul class="space-y-2 text-gray-300">
+                                <li><strong class="text-violet-400">SEND_MESSAGE:</strong> Producer thread handling user input</li>
+                                <li><strong class="text-violet-400">RECV_MESSAGE:</strong> Consumer thread processing server messages</li>
+                                <li><strong class="text-violet-400">screen_mutex:</strong> Synchronizes ncurses UI updates</li>
+                                <li><strong class="text-violet-400">EXIT_FLAG:</strong> Coordinates graceful thread termination</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Synchronization Mechanisms -->
+                <div class="glass-card p-8 animate-fade-in-up">
+                    <h3 class="text-3xl font-bold mb-6 text-cyan-400">Advanced Synchronization Mechanisms</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="tech-detail-card">
+                            <h4 class="text-lg font-semibold mb-3 text-violet-300">Mutex Usage Patterns</h4>
+                            <p class="text-gray-300 text-sm">Strategic mutex placement prevents race conditions during shared resource access while minimizing performance impact.</p>
+                        </div>
+                        <div class="tech-detail-card">
+                            <h4 class="text-lg font-semibold mb-3 text-violet-300">Lock Guard Scoping</h4>
+                            <p class="text-gray-300 text-sm">RAII-based locking ensures automatic resource cleanup and prevents deadlocks through deterministic destruction.</p>
+                        </div>
+                        <div class="tech-detail-card">
+                            <h4 class="text-lg font-semibold mb-3 text-violet-300">Thread-Safe Operations</h4>
+                            <p class="text-gray-300 text-sm">All data structure modifications are protected by appropriate synchronization primitives to ensure consistency.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LRU Cache Implementation Section -->
+        <section class="py-20 px-4 bg-gradient-to-b from-transparent to-cyber-darker" id="lru-cache">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="section-title">LRU Cache Implementation</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                    <div class="glass-card p-8">
+                        <img src="https://pplx-res.cloudinary.com/image/upload/v1753156615/pplx_project_search_images/871e6120a070fb47e5addf5588fd7d475d05174d.jpg" alt="LRU Cache Data Structure" class="w-full h-64 object-cover rounded-lg mb-6">
+                        <h3 class="text-2xl font-bold mb-4 text-cyan-400">Data Structure Design</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            Our custom LRU cache achieves O(1) operations through the combination of a HashMap for fast key lookups and a doubly-linked list for efficient order management.
+                        </p>
+                    </div>
+                    <div class="glass-card p-8">
+                        <img src="https://pplx-res.cloudinary.com/image/upload/v1753156615/pplx_project_search_images/38b81087ec22ff891ab2933c4fb3081a670b9b36.jpg" alt="LRU Cache Operations" class="w-full h-64 object-cover rounded-lg mb-6">
+                        <h3 class="text-2xl font-bold mb-4 text-violet-400">Operation Flow</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            Demonstrates the dynamic behavior of cache operations including insertion, eviction, and priority updates with visual state transitions.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Cache Structure Details -->
+                <div class="glass-card p-8 mb-8 animate-fade-in-up">
+                    <h3 class="text-3xl font-bold mb-6 text-cyan-400">Core Data Structure Implementation</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-violet-300">Node Structure & Design</h4>
+                            <div class="code-container mb-4">
+                                <pre><code class="cpp">class LRU_CACHE {
+private:
+    struct Node {
+        std::string key;
+        std::string value;
+        Node* prev;
+        Node* next;
+        Node(std::string k, std::string v) : 
+            key(k), value(v), prev(nullptr), next(nullptr) {}
+    };
+    
+    std::unordered_map<std::string, Node*> cache_map;
+    Node* head;  // Sentinel node
+    Node* tail;  // Sentinel node
+    int capacity;
+    int size;
+};</code></pre>
+                            </div>
+                            <p class="text-gray-300">The doubly-linked list uses sentinel nodes (head/tail) to eliminate edge case handling during insertion and deletion operations.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-violet-300">Capacity & Memory Management</h4>
+                            <ul class="space-y-3 text-gray-300">
+                                <li><strong class="text-cyan-400">Fixed Capacity:</strong> Limited to 5 messages for optimal performance</li>
+                                <li><strong class="text-cyan-400">Dynamic Allocation:</strong> Nodes created/destroyed as needed</li>
+                                <li><strong class="text-cyan-400">Memory Safety:</strong> Proper cleanup in destructor</li>
+                                <li><strong class="text-cyan-400">Pointer Management:</strong> Careful handling of prev/next relationships</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT_DATA Algorithm -->
+                <div class="glass-card p-8 mb-8 animate-fade-in-up">
+                    <h3 class="text-3xl font-bold mb-6 text-violet-400">PUT_DATA Operation - Detailed Algorithm</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <div class="code-container mb-4">
+                                <pre><code class="cpp">void PUT_DATA(std::string key, std::string value) {
+    auto it = cache_map.find(key);
+    
+    if (it != cache_map.end()) {
+        // Key exists: update value and move to front
+        Node* node = it->second;
+        node->value = value;
+        Del_Node(node);
+        ADD_Node(node);
+    } else {
+        // New key: check capacity
+        if (size >= capacity) {
+            // Evict LRU item (tail->prev)
+            Node* lru = tail->prev;
+            cache_map.erase(lru->key);
+            Del_Node(lru);
+            delete lru;
+            size--;
+        }
+        
+        // Add new node at front
+        Node* new_node = new Node(key, value);
+        cache_map[key] = new_node;
+        ADD_Node(new_node);
+        size++;
+    }
+}</code></pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-cyan-300">Algorithm Complexity Analysis</h4>
+                            <div class="space-y-4">
+                                <div class="tech-detail-card">
+                                    <h5 class="font-semibold text-violet-300 mb-2">HashMap Lookup: O(1)</h5>
+                                    <p class="text-gray-300 text-sm">Direct key access through hash table provides constant-time key existence checking.</p>
+                                </div>
+                                <div class="tech-detail-card">
+                                    <h5 class="font-semibold text-violet-300 mb-2">Node Operations: O(1)</h5>
+                                    <p class="text-gray-300 text-sm">ADD_Node and Del_Node operations maintain constant time through direct pointer manipulation.</p>
+                                </div>
+                                <div class="tech-detail-card">
+                                    <h5 class="font-semibold text-violet-300 mb-2">Eviction Policy: O(1)</h5>
+                                    <p class="text-gray-300 text-sm">LRU eviction directly accesses tail->prev without traversal, ensuring optimal performance.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Node Operations -->
+                <div class="glass-card p-8 animate-fade-in-up">
+                    <h3 class="text-3xl font-bold mb-6 text-cyan-400">Core Node Operations</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-violet-300">ADD_Node Implementation</h4>
+                            <div class="code-container mb-4">
+                                <pre><code class="cpp">void ADD_Node(Node* node) {
+    // Insert at front (after head sentinel)
+    node->prev = head;
+    node->next = head->next;
+    head->next->prev = node;
+    head->next = node;
+}</code></pre>
+                            </div>
+                            <p class="text-gray-300">Inserts node immediately after head sentinel, making it the most recently used item.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-violet-300">Del_Node Implementation</h4>
+                            <div class="code-container mb-4">
+                                <pre><code class="cpp">void Del_Node(Node* node) {
+    // Remove from current position
+    node->prev->next = node->next;
+    node->next->prev = node->prev;
+}</code></pre>
+                            </div>
+                            <p class="text-gray-300">Removes node from any position in the list by updating adjacent nodes' pointers directly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ncurses UI Management Section -->
+        <section class="py-20 px-4" id="ncurses-ui">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="section-title">Ncurses UI Management</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                    <div class="glass-card p-8">
+                        <img src="https://pplx-res.cloudinary.com/image/upload/v1753156615/pplx_project_search_images/ff2c655f4784edb76391c7e440a911e5d7bb165d.jpg" alt="Terminal Chat Interface" class="w-full h-64 object-cover rounded-lg mb-6">
+                        <h3 class="text-2xl font-bold mb-4 text-cyan-400">Client UI Architecture</h3>
+                        <p class="text-gray-300 leading-relaxed">
+                            Rich terminal interface with separate windows for messages and input, featuring real-time updates and responsive design.
+                        </p>
+                    </div>
+                    <div class="glass-card p-8">
+                        <h3 class="text-2xl font-bold mb-4 text-violet-400">UI Components</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 bg-black/30 rounded-lg">
+                                <span class="text-cyan-300">Message Window</span>
+                                <span class="text-gray-400">Scrollable chat display</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-black/30 rounded-lg">
+                                <span class="text-cyan-300">Input Window</span>
+                                <span class="text-gray-400">Character input processing</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-black/30 rounded-lg">
+                                <span class="text-cyan-300">Status Display</span>
+                                <span class="text-gray-400">Connection & user info</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Server UI Architecture -->
+                <div class="glass-card p-8 mb-8 animate-fade-in-up">
+                    <h3 class="text-3xl font-bold mb-6 text-cyan-400">Server UI Implementation</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-violet-300">Window Layout & Management</h4>
+                            <div class="code-container mb-4">
+                                <pre><code class="cpp">void setup_server_ui() {
+    initscr();
+    cbreak();
+    noecho();
+    start_color();
+    
+    // Calculate window dimensions
+    int max_y, max_x;
+    getmaxyx(stdscr, max_y, max_x);
+    
+    // Create windows
+    log_win = newwin(max_y - 5, max_x, 0, 0);
+    status_win = newwin(5, max_x, max_y - 5, 0);
+    
+    // Enable scrolling
+    scrollok(log_win, TRUE);
+    wsetscrreg(log_win, 0, max_y - 6);
+}</code></pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-violet-300">Thread-Safe UI Updates</h4>
+                            <ul class="space-y-3 text-gray-300">
+                                <li><strong class="text-cyan-400">Mutex Protection:</strong> cout_mtx guards console operations</li>
+                                <li><strong class="text-cyan-400">Atomic Updates:</strong> Coordinated window refreshes</li>
+                                <li><strong class="text-cyan-400">Timestamped Logging:</strong> Real-time event tracking</li>
+                                <li><strong class="text-cyan-400">Dynamic Resizing:</strong> Responsive to terminal changes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Client UI Processing -->
+                <div class="glass-card p-8 animate-fade-in-up">
+                    <h3 class="text-3xl font-bold mb-6 text-violet-400">Client UI Processing Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-cyan-300">Input Processing</h4>
+                            <div class="code-container mb-4">
+                                <pre><code class="cpp">void handle_input() {
+    int ch;
+    while ((ch = wgetch(input_win)) != ERR) {
+        std::lock_guard<std::mutex> lock(screen_mutex);
+        
+        if (ch == KEY_BACKSPACE || ch == 127) {
+            // Handle backspace
+            if (input_pos > 0) {
+                input_buffer[--input_pos] = '\0';
+                update_input_display();
+            }
+        } else if (ch == '\n' || ch == '\r') {
+            // Send message
+            send_message(input_buffer);
+            clear_input_buffer();
+        } else if (isprint(ch) && input_pos < MAX_INPUT) {
+            // Add character
+            input_buffer[input_pos++] = ch;
+            update_input_display();
+        }
+    }
+}</code></pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-cyan-300">Message Display Management</h4>
+                            <ul class="space-y-3 text-gray-300">
+                                <li><strong class="text-violet-400">Scrollable History:</strong> Automatic scrolling for new messages</li>
+                                <li><strong class="text-violet-400">Color Coding:</strong> User-specific message colors</li>
+                                <li><strong class="text-violet-400">Cursor Management:</strong> Proper cursor positioning</li>
+                                <li><strong class="text-violet-400">Border Drawing:</strong> Clean window separation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Networking & Communication Section -->
+        <section class="py-20 px-4 bg-gradient-to-b from-transparent to-cyber-darker" id="networking">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="section-title">Networking & Communication</h2>
+                
+                <div class="glass-card p-8 mb-8">
+                    <img src="https://pplx-res.cloudinary.com/image/upload/v1748753687/pplx_project_search_images/5e2c410108ef6e4d718ef596eee4ae8c4cfcb245.jpg" alt="Socket Programming Flow" class="w-full h-96 object-contain rounded-lg mb-6 bg-black/20">
+                    <h3 class="text-2xl font-bold mb-4 text-center text-cyan-400">Socket Programming Flow</h3>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="glass-card p-8">
+                        <h3 class="text-2xl font-bold mb-4 text-cyan-400">TCP/IPv4 Implementation</h3>
+                        <div class="code-container mb-4">
+                            <pre><code class="cpp">// Server socket setup
+int server_socket = socket(AF_INET, SOCK_STREAM, 0);
+struct sockaddr_in server_addr;
+server_addr.sin_family = AF_INET;
+server_addr.sin_addr.s_addr = INADDR_ANY;
+server_addr.sin_port = htons(port);
+
+// Bind and listen
+bind(server_socket, (struct sockaddr*)&server_addr, 
+     sizeof(server_addr));
+listen(server_socket, 5);
+
+// Accept connections
+int client_socket = accept(server_socket, 
+    (struct sockaddr*)&client_addr, &client_len);</code></pre>
+                        </div>
+                    </div>
+                    <div class="glass-card p-8">
+                        <h3 class="text-2xl font-bold mb-4 text-violet-400">Protocol Design</h3>
+                        <div class="space-y-4">
+                            <div class="protocol-item">
+                                <h4 class="font-semibold text-cyan-300 mb-2">Message Format</h4>
+                                <p class="text-gray-300 text-sm">Structured messages with name, color ID, and content for proper client identification and display formatting.</p>
+                            </div>
+                            <div class="protocol-item">
+                                <h4 class="font-semibold text-cyan-300 mb-2">Command System</h4>
+                                <p class="text-gray-300 text-sm">Specialized commands (#exit, #gc, #cli, #getmsg) for client control and server interaction.</p>
+                            </div>
+                            <div class="protocol-item">
+                                <h4 class="font-semibold text-cyan-300 mb-2">Private Messaging</h4>
+                                <p class="text-gray-300 text-sm">Direct client-to-client communication through server routing with unique client identification.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Broadcasting System -->
+                <div class="glass-card p-8 mb-8 animate-fade-in-up">
+                    <h3 class="text-3xl font-bold mb-6 text-cyan-400">Message Broadcasting System</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <div class="code-container mb-4">
+                                <pre><code class="cpp">void BROADCASTING(std::string message, int sender_id) {
+    char msg[MAX_LEN];
+    strcpy(msg, message.c_str());
+    
+    std::lock_guard<std::mutex> lock(client_mtx);
+    for (const auto& client : clients) {
+        if (client.id != sender_id) {
+            int result = send(client.socket, msg, 
+                             sizeof(msg), MSG_NOSIGNAL);
+            if (result < 0) {
+                // Handle disconnected client
+                handle_client_disconnect(client.id);
+            }
+        }
+    }
+}</code></pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-4 text-violet-300">Error Handling & Recovery</h4>
+                            <ul class="space-y-3 text-gray-300">
+                                <li><strong class="text-cyan-400">Connection Monitoring:</strong> Detect broken connections through send() return values</li>
+                                <li><strong class="text-cyan-400">Graceful Cleanup:</strong> Remove disconnected clients from active list</li>
+                                <li><strong class="text-cyan-400">Signal Handling:</strong> SIGPIPE prevention with MSG_NOSIGNAL</li>
+                                <li><strong class="text-cyan-400">Resource Cleanup:</strong> Proper socket and thread resource management</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Code Highlights Section -->
+        <section class="py-20 px-4" id="code-highlights">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="section-title">Code Highlights</h2>
+                
+                <div class="grid grid-cols-1 gap-8">
+                    <!-- Client Handler -->
+                    <div class="code-block animate-fade-in-up">
+                        <h3 class="text-2xl font-semibold mb-4 text-cyan-400">Complete Client Handler Implementation</h3>
+                        <div class="code-container">
+                            <pre><code class="cpp">void HANDLE_CLIENT(int client_socket, int id) {
+    char name[MAX_LEN];
+    char msg[MAX_LEN];
+    
+    // Receive client name
+    recv(client_socket, name, sizeof(name), 0);
+    SET_NAME(id, name);
+    
+    // Welcome sequence
+    std::string welcome_msg = std::string(name) + " has joined the chat";
+    add_log_message(welcome_msg);
+    BROADCASTING("NEW_CON", id);
+    BROADCAST_ID_FOR_COLOR(id, id);
+    BROADCASTING(welcome_msg, id);
+    
+    // Send cached messages to new client
+    cache.send_cached_messages(client_socket);
+    
+    // Main message loop
+    while (true) {
+        int bytes_recv = recv(client_socket, msg, sizeof(msg), 0);
+        if (bytes_recv <= 0) {
+            // Handle disconnection
+            std::string bye_msg = std::string(name) + " has left the chat";
+            BROADCASTING(bye_msg, id);
+            END_CON(id);
+            return;
+        }
+        
+        // Process commands
+        if (strcmp(msg, "#exit") == 0) {
+            std::string bye_msg = std::string(name) + " has left the chat";
+            BROADCASTING(bye_msg, id);
+            END_CON(id);
+            return;
+        } else if (strcmp(msg, "#getmsg") == 0) {
+            cache.send_cached_messages(client_socket);
+        } else {
+            // Regular message handling
+            cache.PUT_DATA(std::to_string(id), std::string(name) + ": " + msg);
+            BROADCASTING(std::string(name), id);
+            BROADCASTING(std::string(msg), id);
+        }
+    }
+}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Signal Handling -->
+                    <div class="code-block animate-fade-in-up">
+                        <h3 class="text-2xl font-semibold mb-4 text-violet-400">Signal Handling & Graceful Shutdown</h3>
+                        <div class="code-container">
+                            <pre><code class="cpp">void signal_handler(int signal) {
+    std::lock_guard<std::mutex> lock(cout_mtx);
+    mvwprintw(log_win, log_y++, 1, "Server shutting down...");
+    wrefresh(log_win);
+    
+    // Notify all clients
+    BROADCASTING("SERVER_SHUTDOWN", -1);
+    
+    // Close all client connections
+    for (auto& client : clients) {
+        close(client.socket);
+    }
+    
+    // Wait for all threads to complete
+    for (auto& t : threads) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+    
+    // Cleanup ncurses
+    endwin();
+    close(server_socket);
+    exit(0);
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Setup and Usage Section -->
+        <section class="py-20 px-4 bg-gradient-to-b from-transparent to-cyber-darker" id="setup">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="section-title">Setup and Usage</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                    <div class="glass-card p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-cyan-400">Compilation Instructions</h3>
+                        <div class="space-y-4">
+                            <div class="command-block">
+                                <div class="flex items-center mb-2">
+                                    <span class="step-number">1</span>
+                                    <span class="ml-3 text-cyan-300">Server Compilation</span>
+                                </div>
+                                <pre><code>g++ -o ser server.cpp sockutil.cpp -lncurses -lpthread</code></pre>
+                            </div>
+                            <div class="command-block">
+                                <div class="flex items-center mb-2">
+                                    <span class="step-number">2</span>
+                                    <span class="ml-3 text-cyan-300">Client Compilation</span>
+                                </div>
+                                <pre><code>g++ -o cli client.cpp sockutil.cpp -lncurses -lpthread</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass-card p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-violet-400">Running the System</h3>
+                        <div class="space-y-4">
+                            <div class="command-block">
+                                <div class="flex items-center mb-2">
+                                    <span class="step-number">3</span>
+                                    <span class="ml-3 text-violet-300">Start Server</span>
+                                </div>
+                                <pre><code>./ser &lt;port&gt;</code></pre>
+                                <p class="text-gray-400 text-sm mt-2">Example: ./ser 8080</p>
+                            </div>
+                            <div class="command-block">
+                                <div class="flex items-center mb-2">
+                                    <span class="step-number">4</span>
+                                    <span class="ml-3 text-violet-300">Connect Clients</span>
+                                </div>
+                                <pre><code>./cli &lt;server_ip&gt; &lt;port&gt;</code></pre>
+                                <p class="text-gray-400 text-sm mt-2">Example: ./cli 127.0.0.1 8080</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8">
+                    <h3 class="text-2xl font-bold mb-6 text-center text-cyan-400">Available Commands</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="command-card">
+                            <h4 class="font-bold text-violet-300 mb-2">#exit</h4>
+                            <p class="text-gray-300 text-sm">Gracefully disconnect from server</p>
+                        </div>
+                        <div class="command-card">
+                            <h4 class="font-bold text-violet-300 mb-2">#gc</h4>
+                            <p class="text-gray-300 text-sm">Get connected clients count</p>
+                        </div>
+                        <div class="command-card">
+                            <h4 class="font-bold text-violet-300 mb-2">#cli</h4>
+                            <p class="text-gray-300 text-sm">List all connected clients</p>
+                        </div>
+                        <div class="command-card">
+                            <h4 class="font-bold text-violet-300 mb-2">#getmsg</h4>
+                            <p class="text-gray-300 text-sm">Retrieve cached message history</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-16 px-4 border-t border-gray-800">
+            <div class="max-w-6xl mx-auto text-center">
+                <div class="glass-card p-8">
+                    <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
+                        Experience High-Performance Real-Time Communication
+                    </h3>
+                    <p class="text-gray-300 mb-6">Advanced C++ networking with sophisticated threading, custom data structures, and rich terminal interfaces</p>
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <span class="px-4 py-2 bg-cyan-400/10 border border-cyan-400/20 rounded-lg text-cyan-300 text-sm">Multi-Threading</span>
+                        <span class="px-4 py-2 bg-violet-400/10 border border-violet-400/20 rounded-lg text-violet-300 text-sm">LRU Cache</span>
+                        <span class="px-4 py-2 bg-cyan-400/10 border border-cyan-400/20 rounded-lg text-cyan-300 text-sm">Socket Programming</span>
+                        <span class="px-4 py-2 bg-violet-400/10 border border-violet-400/20 rounded-lg text-violet-300 text-sm">Ncurses UI</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
